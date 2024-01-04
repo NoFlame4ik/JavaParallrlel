@@ -1,0 +1,58 @@
+import java.util.ArrayList;
+import java.util.List;
+
+public class ArraySumCalculator {
+
+    public static void main(String[] args) {
+        int[] array = {1, 2, 3, 4, 5, 6};
+        calculateArraySum(array);
+    }
+
+    public static void calculateArraySum(int[] array) {
+        List<int[]> iterations = new ArrayList<>();
+        iterations.add(array.clone());
+
+        long startTime = System.nanoTime();
+
+        while (array.length > 1) {
+            int newArrayLength = (array.length % 2 == 0) ? array.length / 2 : (array.length / 2) + 1;
+            int[] newArray = new int[newArrayLength];
+
+            for (int i = 0; i < newArrayLength; i++) {
+                if (2 * i + 1 < array.length) {
+                    newArray[i] = array[i] + array[array.length - 1 - i];
+                } else {
+                    newArray[i] = array[i];
+                }
+            }
+
+            iterations.add(newArray.clone());
+            array = newArray;
+        }
+
+        long endTime = System.nanoTime();
+        long executionTimeNano = endTime - startTime;
+        long executionTimeMs = executionTimeNano / 1_000_000; // Convert nanoseconds to milliseconds
+
+        // Print intermediate arrays
+        printIterations(iterations);
+
+        System.out.println("Final result: " + array[0]);
+        System.out.println("Execution time: " + executionTimeMs + " ms");
+    }
+
+    private static void printArray(int[] array) {
+        for (int element : array) {
+            System.out.print(element + " ");
+        }
+        System.out.println();
+    }
+
+    private static void printIterations(List<int[]> iterations) {
+        System.out.println("Intermediate arrays after each iteration:");
+        for (int i = 0; i < iterations.size(); i++) {
+            System.out.print("Iteration " + i + ": ");
+            printArray(iterations.get(i));
+        }
+    }
+}

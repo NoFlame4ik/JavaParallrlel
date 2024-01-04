@@ -1,0 +1,118 @@
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
+class IndexContainer {
+    private int index;
+
+    public IndexContainer(int index) {
+        this.index = index;
+    }
+
+    public int getIndex() {
+        return index;
+    }
+
+    public void incrementIndex() {
+        index++;
+    }
+}
+
+public class ArraySumCalculator {
+
+        public static void main(String[] args) {
+        int[] array = {1, 2, 3, 4, 5, 6};
+        calculateArraySum(array);
+    }
+//    public static void main(String[] args) {
+//        int[] array = new int[100];
+//        for (int i = 0; i < 100; i++) {
+//            array[i] = i + 1;
+//        }
+//        calculateArraySum(array);
+//    }
+
+    public static void calculateArraySum(int[] array) {
+        long startTime = System.currentTimeMillis();
+
+        ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+
+        List<int[]> iterations = new ArrayList<>();
+        iterations.add(array.clone());
+
+        while (array.length > 1) {
+            int newArrayLength = (array.length % 2 == 0) ? array.length / 2 : (array.length / 2) + 1;
+            int[] newArray = new int[newArrayLength];
+
+            List<Future<Integer>> futures = new ArrayList<>();
+            IndexContainer indexContainer = new IndexContainer(0);
+
+            for (int i = 0; i < newArrayLength; i++) {
+                submitTask(executorService, futures, array, indexContainer);
+                indexContainer.incrementIndex();
+            }
+
+            try {
+                for (int i = 0; i < newArrayLength; i++) {
+                    newArray[i] = futures.get(i).get();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            iterations.add(newArray.clone());
+            array = newArray;
+
+            if (array.length % 2 != 0 && array.length > 1) {
+                array = calculateOddLengthArray(array);
+                iterations.add(array.clone());
+            }
+        }
+
+        executorService.shutdown();
+
+        // Print intermediate arrays
+        for (int i = 0; i < iterations.size(); i++) {
+            printArray(iterations.get(i));
+        }
+
+        System.out.println("Final result: " + array[0]);
+
+        long endTime = System.currentTimeMillis();
+        long executionTime = endTime - startTime;
+        System.out.println("Execution time: " + executionTime + " ms");
+    }
+
+    private static void submitTask(ExecutorService executorService, List<Future<Integer>> futures, int[] array, IndexContainer indexContainer) {
+        futures.add(executorService.submit(() -> calculatePairSum(array, indexContainer)));
+    }
+
+    private static int calculatePairSum(int[] array, IndexContainer indexContainer) {
+        int index = indexContainer.getIndex();
+        int oppositeIndex = array.length - 1 - index;
+        return array[index] + array[oppositeIndex];
+    }
+
+    private static void printArray(int[] array) {
+        for (int element : array) {
+            System.out.print(element + " ");
+        }
+        System.out.println();
+    }
+
+    private static int[] calculateOddLengthArray(int[] array) {
+        int[] oddLengthArray = new int[array.length / 2 + 1];
+
+        for (int i = 0; i < array.length - 1; i += 2) {
+            oddLengthArray[i / 2] = array[i] + array[i + 1];
+        }
+
+        oddLengthArray[array.length / 2] = array[array.length - 1];
+
+        return oddLengthArray;
+    }
+}
+
